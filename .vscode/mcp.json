@@ -1,0 +1,12 @@
+{
+	"servers": {
+		"my-mcp-server-fb6fa47e": {
+			"type": "stdio",
+			"command": "node",
+			"args": [
+				"${workspaceFolder}/dist/index.js"
+			]
+		}
+	},
+	"inputs": []
+}
