@@ -1,4 +1,4 @@
-# Awatar MCP Project
+# MCP Server
 
 This repository contains a Model Context Protocol (MCP) implementation. MCP is a protocol designed to facilitate communication between models and tools in a standardized way.
 
