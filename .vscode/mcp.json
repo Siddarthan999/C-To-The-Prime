@@ -1,6 +1,6 @@
 {
 	"servers": {
-		"my-mcp-server-atlassian": {
+		"my-mcp-server": {
 			"type": "stdio",
 			"command": "node",
 			"args": [
