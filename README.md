@@ -60,6 +60,30 @@ This guide explains how to configure access credentials for **Bitbucket** and **
 
 ---
 
+## 🔷 Atlassian (Jira & Confluence) Setup
+
+**To create an API token with scopes:**
+
+- Log in to https://id.atlassian.com/manage-profile/security/api-tokens.
+
+- Select **Create API** token with scopes.
+
+- Give your API token a name that describes its purpose.
+
+- Select an **expiration date** for the API token.
+
+  - Token expiration is 1 to 365 days.
+
+- Select the **app** you’d like the API token to access.
+
+- Select the **scopes** to determine what the API token can do in Jira or Confluence.
+
+- Select **Create**.
+
+- Select **Copy to clipboard**, then paste the token to your script, or save it somewhere safe.
+
+You can't recover the API token after you’re done with this step. We recommend saving your API token in a password manager.
+
 ## 🐙 Bitbucket Setup
 
 ### ✅ 1. `BITBUCKET_USERNAME`
