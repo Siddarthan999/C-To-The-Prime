@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { bitbucketAuthHeader, BITBUCKET_WORKSPACE } from "../auth/bitbucketAuth.js";
 
 export function registerBitbucketTools(server: McpServer) {
+    
     // List Repositories
     server.tool("bitbucket-list-repos", {}, async () => {
         const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}`, { headers: bitbucketAuthHeader });
