@@ -138,4 +138,74 @@ export function registerBitbucketTools(server: McpServer) {
         }
         return { content: [{ type: "text", text: `Pull request #${prId} approved successfully.` }] };
     });
+
+    // Create Branch
+    server.tool("bitbucket-create-branch", {
+        repoSlug: z.string(),
+        branchName: z.string(),
+        fromRef: z.string() // usually "main" or "master"
+    }, async ({ repoSlug, branchName, fromRef }) => {
+        const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/refs/branches`, {
+            method: "POST",
+            headers: {
+                ...bitbucketAuthHeader,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: branchName,
+                target: { hash: fromRef }
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            return { content: [{ type: "text", text: `Failed to create branch ${branchName}. Status: ${response.status}. Details: ${errorText}` }] };
+        }
+        return { content: [{ type: "text", text: `Branch '${branchName}' created from '${fromRef}' successfully.` }] };
+    });
+
+    // List Branches
+    server.tool("bitbucket-list-branches", { repoSlug: z.string() }, async ({ repoSlug }) => {
+        const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/refs/branches`, {
+            headers: bitbucketAuthHeader
+        });
+        if (!response.ok) {
+            return { content: [{ type: "text", text: `Failed to fetch branches. Status: ${response.status}` }] };
+        }
+        const data = await response.json();
+        const branchList = data.values.map((b: any) => `- ${b.name} (${b.target.hash.substring(0, 7)})`).join("\n");
+        return { content: [{ type: "text", text: branchList || "No branches found." }] };
+    });
+
+    // Get Commit Info
+    server.tool("bitbucket-get-commit", { repoSlug: z.string(), commitHash: z.string() }, async ({ repoSlug, commitHash }) => {
+        const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/commit/${commitHash}`, {
+            headers: bitbucketAuthHeader
+        });
+        if (!response.ok) {
+            return { content: [{ type: "text", text: `Failed to fetch commit ${commitHash}. Status: ${response.status}` }] };
+        }
+        const data = await response.json();
+        return {
+            content: [{
+                type: "text",
+                text: `Commit: ${data.hash}\nAuthor: ${data.author.user?.display_name ?? data.author.raw}\nMessage: ${data.message}\nDate: ${data.date}`
+            }]
+        };
+    });
+
+    // List Commits
+    server.tool("bitbucket-list-commits", { repoSlug: z.string(), branch: z.string().default("main") }, async ({ repoSlug, branch }) => {
+        const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/commits/${branch}`, {
+            headers: bitbucketAuthHeader
+        });
+
+        if (!response.ok) {
+            return { content: [{ type: "text", text: `Failed to list commits for branch ${branch}. Status: ${response.status}` }] };
+        }
+
+        const data = await response.json();
+        const commitList = data.values.map((c: any) => `- ${c.hash.substring(0, 7)}: ${c.message.split("\n")[0]} by ${c.author.user?.display_name ?? c.author.raw}`).join("\n");
+        return { content: [{ type: "text", text: commitList || "No commits found." }] };
+    });
 }
