@@ -6,6 +6,7 @@ import { registerJiraTools } from "./tools/jira.js";
 import { registerConfluenceTools } from "./tools/confluence.js";
 import { registerBitbucketTools } from "./tools/bitbucket.js";
 import { registerGoogleDriveTools } from "./tools/googleDrive.js";
+import { registerNotionTools } from "./tools/notion.js";
 
 const server = new McpServer({
     name: "C to the Prime MCP Server",
@@ -16,6 +17,7 @@ registerJiraTools(server);
 registerConfluenceTools(server);
 registerBitbucketTools(server);
 registerGoogleDriveTools(server);
+registerNotionTools(server);
 
 // Start MCP server
 const transport = new StdioServerTransport();
