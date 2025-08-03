@@ -176,4 +176,45 @@ export function registerConfluenceTools(server: McpServer) {
       }]
     };
   });
+
+  // ✅ List Macro Usage in a Page
+  server.tool("get-confluence-macros", { pageId: z.string() }, async ({ pageId }) => {
+    const url = `${ATLASSIAN_BASE_URL}/wiki/rest/api/content/${pageId}?expand=body.storage`;
+    const response = await fetch(url, { headers: jiraAuthHeader });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        content: [{
+          type: "text",
+          text: `❌ Failed to fetch page ${pageId} for macro parsing. Status: ${response.status}. Details: ${errorText}`
+        }]
+      };
+    }
+
+    const data = await response.json();
+    const html = data.body.storage.value;
+
+    // Match <ac:structured-macro ac:name="macroName">
+    const macroRegex = /<ac:structured-macro[^>]*ac:name="([^"]+)"/g;
+    const macros = new Set<string>();
+    let match;
+    while ((match = macroRegex.exec(html)) !== null) {
+      macros.add(match[1]);
+    }
+
+    if (macros.size === 0) {
+      return {
+        content: [{ type: "text", text: `No macros found on page "${data.title}".` }]
+      };
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: `🧩 Macros used in page "${data.title}":\n\n` + [...macros].map(m => `- ${m}`).join("\n")
+      }]
+    };
+  });
+
 }
