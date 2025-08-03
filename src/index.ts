@@ -6,6 +6,7 @@ import { registerJiraTools } from "./tools/jira.js";
 import { registerConfluenceTools } from "./tools/confluence.js";
 import { registerBitbucketTools } from "./tools/bitbucket.js";
 import { registerGoogleDriveTools } from "./tools/googleDrive.js";
+import { registerNotionTools } from "./tools/notion.js";
 import { registerGithubTools } from "./tools/github.js";
 
 const server = new McpServer({
@@ -17,6 +18,7 @@ registerJiraTools(server);
 registerConfluenceTools(server);
 registerBitbucketTools(server);
 registerGoogleDriveTools(server);
+registerNotionTools(server);
 registerGithubTools(server);
 
 // Start MCP server

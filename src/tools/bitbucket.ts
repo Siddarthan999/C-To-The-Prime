@@ -17,12 +17,61 @@ export function registerBitbucketTools(server: McpServer) {
 
     // Get Repository Details
     server.tool("bitbucket-get-repo", { repoSlug: z.string() }, async ({ repoSlug }) => {
-        const response = await fetch(`https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}`, { headers: bitbucketAuthHeader });
-        if (!response.ok) {
-            return { content: [{ type: "text", text: `Failed to fetch repository ${repoSlug}. Status: ${response.status}` }] };
+        // 1. Repo info
+        const repoRes = await fetch(
+            `https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}`,
+            { headers: bitbucketAuthHeader }
+        );
+        if (!repoRes.ok) {
+            return {
+                content: [{ type: "text", text: `Failed to fetch repository ${repoSlug}. Status: ${repoRes.status}` }],
+            };
         }
-        const data = await response.json();
-        return { content: [{ type: "text", text: `Repo: ${data.full_name}\nDescription: ${data.description ?? "No description."}\nURL: ${data.links.html.href}` }] };
+        const repo = await repoRes.json();
+        const defaultBranch = repo.mainbranch?.name ?? "main";
+
+        // 2. Branch count
+        const branchesRes = await fetch(
+            `https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/refs/branches`,
+            { headers: bitbucketAuthHeader }
+        );
+        const branchData = await branchesRes.json();
+        const branchCount = branchData?.size ?? 0;
+
+        // 3. Commits on default branch
+        const commitsRes = await fetch(
+            `https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/commits/${defaultBranch}`,
+            { headers: bitbucketAuthHeader }
+        );
+        const commitsData = await commitsRes.json();
+        const commitCount = commitsData?.size ?? 0;
+        const latestCommit = commitsData?.values?.[0];
+
+        // 4. Open pull requests
+        const prRes = await fetch(
+            `https://api.bitbucket.org/2.0/repositories/${BITBUCKET_WORKSPACE}/${repoSlug}/pullrequests?state=OPEN`,
+            { headers: bitbucketAuthHeader }
+        );
+        const prData = await prRes.json();
+        const openPRs = prData?.size ?? 0;
+
+        const details = `
+            Repository Name: ${repo.full_name}
+            Description: ${repo.description || "No description provided."}
+            URL: ${repo.links?.html?.href}
+            Default Branch: ${defaultBranch}
+            Branches: ${branchCount}
+            Commits: ${commitCount}
+            Open Pull Requests: ${openPRs}
+
+            Latest Commit:
+            - Message: ${latestCommit?.message?.split("\n")[0] || "N/A"}
+            - Author: ${latestCommit?.author?.user?.display_name || latestCommit?.author?.raw || "N/A"}
+            - Date: ${latestCommit?.date || "N/A"}
+                `.trim();
+        return {
+        content: [{ type: "text", text: details }],
+        };
     });
 
     // Create Repository
