@@ -14,7 +14,7 @@ const server = new McpServer({
     version: "1.0.0"
 });
 
-registerJiraTools(server);
+await registerJiraTools(server);
 registerConfluenceTools(server);
 registerBitbucketTools(server);
 registerGoogleDriveTools(server);

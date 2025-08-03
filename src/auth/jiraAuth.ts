@@ -2,10 +2,16 @@
 import { getAuthFields } from "./keyVaultAuth.js";
 
 let ATLASSIAN_BASE_URL = "";
-let jiraAuthHeader: { Authorization: string } = { Authorization: "" };
+let jiraAuthHeader: { Authorization: string; "Content-Type": string } = {
+  Authorization: "",
+  "Content-Type": "application/json"
+};
 
-// Immediately fetch and cache auth data
-const init = (async () => {
+let initialized = false;
+
+export async function initJiraAuth() {
+  if (initialized) return;
+
   const creds = await getAuthFields("Atlassian");
 
   if (!creds.ATLASSIAN_EMAIL || !creds.ATLASSIAN_API_TOKEN || !creds.ATLASSIAN_BASE_URL) {
@@ -16,8 +22,11 @@ const init = (async () => {
 
   const token = Buffer.from(`${creds.ATLASSIAN_EMAIL}:${creds.ATLASSIAN_API_TOKEN}`).toString("base64");
   jiraAuthHeader = {
-    Authorization: `Basic ${token}`
+    Authorization: `Basic ${token}`,
+    "Content-Type": "application/json"
   };
-})();
+
+  initialized = true;
+}
 
 export { ATLASSIAN_BASE_URL, jiraAuthHeader };
