@@ -34,6 +34,7 @@ export async function registerGoogleCalendarTools(server: McpServer) {
             const summary = e.summary || "No Title";
             const start = e.start?.dateTime || e.start?.date;
             const organizer = e.organizer?.email || "Unknown";
+            const id = e.id;
             interface Attendee {
                 email: string;
                 responseStatus?: string;
@@ -41,7 +42,7 @@ export async function registerGoogleCalendarTools(server: McpServer) {
 
             const participants: string = (e.attendees as Attendee[] | undefined)?.map(a => `${a.email} (${a.responseStatus})`).join(", ") || "None";
             const meetLink = e.hangoutLink || "No Meet Link";
-            return `📅 ${summary}\n🕒 ${start}\n👤 Organizer: ${organizer}\n👥 Participants: ${participants}\n🔗 Meet Link: ${meetLink}`;
+            return `🆔 Event ID: ${id}\n📅 ${summary}\n🕒 ${start}\n👤 Organizer: ${organizer}\n👥 Participants: ${participants}\n🔗 Meet Link: ${meetLink}`;
         }).join("\n\n") || "No meetings found.";
 
         return { content: [{ type: "text", text: content }] };
@@ -111,8 +112,12 @@ export async function registerGoogleCalendarTools(server: McpServer) {
     // Delete meeting
     server.tool("delete-meeting", { eventId: z.string() }, async ({ eventId }) => {
         const client = getGoogleCalendarClient();
-        await client.events.delete({ calendarId: 'primary', eventId });
-        return { content: [{ type: "text", text: `🗑️ Meeting deleted.` }] };
+        try {
+            await client.events.delete({ calendarId: 'primary', eventId });
+            return { content: [{ type: "text", text: `🗑️ Meeting deleted.` }] };
+        } catch (err: any) {
+            return { content: [{ type: "text", text: `❌ Failed to delete: ${err.response?.data?.error?.message || err.message}` }] };
+        }
     });
 
     // Reschedule meeting
