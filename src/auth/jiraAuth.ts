@@ -1,10 +1,32 @@
-import 'dotenv/config';
+// src/auth/jiraAuth.ts
+import { getAuthFields } from "./keyVaultAuth.js";
 
-export const ATLASSIAN_EMAIL = process.env.ATLASSIAN_EMAIL!;
-export const ATLASSIAN_API_TOKEN = process.env.ATLASSIAN_API_TOKEN!;
-export const ATLASSIAN_BASE_URL = process.env.ATLASSIAN_BASE_URL!;
-
-export const jiraAuthHeader = {
-  Authorization: `Basic ${Buffer.from(`${ATLASSIAN_EMAIL}:${ATLASSIAN_API_TOKEN}`).toString('base64')}`,
-  'Content-Type': 'application/json',
+let ATLASSIAN_BASE_URL = "";
+let jiraAuthHeader: { Authorization: string; "Content-Type": string } = {
+  Authorization: "",
+  "Content-Type": "application/json"
 };
+
+let initialized = false;
+
+export async function initJiraAuth() {
+  if (initialized) return;
+
+  const creds = await getAuthFields("Atlassian");
+
+  if (!creds.ATLASSIAN_EMAIL || !creds.ATLASSIAN_API_TOKEN || !creds.ATLASSIAN_BASE_URL) {
+    throw new Error("Missing Atlassian credentials from KeyVault.");
+  }
+
+  ATLASSIAN_BASE_URL = creds.ATLASSIAN_BASE_URL;
+
+  const token = Buffer.from(`${creds.ATLASSIAN_EMAIL}:${creds.ATLASSIAN_API_TOKEN}`).toString("base64");
+  jiraAuthHeader = {
+    Authorization: `Basic ${token}`,
+    "Content-Type": "application/json"
+  };
+
+  initialized = true;
+}
+
+export { ATLASSIAN_BASE_URL, jiraAuthHeader };

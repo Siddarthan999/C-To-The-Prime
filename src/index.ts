@@ -6,6 +6,9 @@ import { registerJiraTools } from "./tools/jira.js";
 import { registerConfluenceTools } from "./tools/confluence.js";
 import { registerBitbucketTools } from "./tools/bitbucket.js";
 import { registerGoogleDriveTools } from "./tools/googleDrive.js";
+import { registerNotionTools } from "./tools/notion.js";
+import { registerGithubTools } from "./tools/github.js";
+import { registerServiceNowTools } from "./tools/servicenow.js";
 
 import { registerGoogleCalendarTools } from "./tools/googleCalendar.js";
 
@@ -14,10 +17,13 @@ const server = new McpServer({
     version: "1.0.0"
 });
 
-registerJiraTools(server);
+await registerJiraTools(server);
 registerConfluenceTools(server);
 registerBitbucketTools(server);
 registerGoogleDriveTools(server);
+registerNotionTools(server);
+registerGithubTools(server);
+registerServiceNowTools(server);
 
 registerGoogleCalendarTools(server);
 
