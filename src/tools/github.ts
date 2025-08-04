@@ -1,8 +1,11 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { githubAuthHeader, GITHUB_ORG } from "../auth/githubAuth.js";
+import { initGithubAuth, GITHUB_ORG, githubAuthHeader } from "../auth/githubAuth.js";
 
-export function registerGithubTools(server: McpServer) {
+export async function registerGithubTools(server: McpServer) {
+  
+  await initGithubAuth();
+  
   // List Repositories
   server.tool("github-list-repos", {}, async () => {
     const response = await fetch(`https://api.github.com/users/${GITHUB_ORG}/repos`, {
@@ -37,7 +40,8 @@ export function registerGithubTools(server: McpServer) {
   server.tool("github-create-repo", { repoName: z.string(), isPrivate: z.boolean().default(true) }, async ({ repoName, isPrivate }) => {
     const body = {
       name: repoName,
-      private: isPrivate
+      private: isPrivate,
+      auto_init: true
     };
     const url = GITHUB_ORG === process.env.GITHUB_USERNAME
       ? `https://api.github.com/user/repos`
@@ -286,6 +290,7 @@ export function registerGithubTools(server: McpServer) {
       }],
     };
   });
+
   // Commit a File to GitHub
   server.tool("github-commit-file", {
     repoName: z.string(),
