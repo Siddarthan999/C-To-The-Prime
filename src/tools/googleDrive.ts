@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { google } from "googleapis";
-import { drive } from "../auth/googleAuth.js";
+import { initGoogleDriveAuth, getGoogleDriveClient } from "../auth/googleDriveAuth.js";
 
-export function registerGoogleDriveTools(server: McpServer) {
+export async function registerGoogleDriveTools(server: McpServer) {
+    
+    await initGoogleDriveAuth();
+    const drive = getGoogleDriveClient();
     // === GOOGLE DRIVE: Share File/Folder Tool ===
     server.tool(
         "google-drive-share",
@@ -282,41 +285,40 @@ export function registerGoogleDriveTools(server: McpServer) {
     });
 
     server.tool("google-drive-get-link", {
-    fileId: z.string()
-}, async ({ fileId }) => {
-    try {
-        // Make sure the file is shared (e.g., anyone with the link can view)
-        await drive.permissions.create({
-            fileId,
-            requestBody: {
-                type: "anyone",
-                role: "reader" // or "writer" if needed
-            },
-            supportsAllDrives: true
-        });
+        fileId: z.string()
+    }, async ({ fileId }) => {
+        try {
+            // Make sure the file is shared (e.g., anyone with the link can view)
+            await drive.permissions.create({
+                fileId,
+                requestBody: {
+                    type: "anyone",
+                    role: "reader" // or "writer" if needed
+                },
+                supportsAllDrives: true
+            });
 
-        // Now get the file metadata which includes the shareable link
-        const res = await drive.files.get({
-            fileId,
-            fields: "id, name, webViewLink, webContentLink",
-            supportsAllDrives: true
-        });
+            // Now get the file metadata which includes the shareable link
+            const res = await drive.files.get({
+                fileId,
+                fields: "id, name, webViewLink, webContentLink",
+                supportsAllDrives: true
+            });
 
-        return {
-            content: [{
-                type: "text",
-                text: `🔗 Shareable link for "${res.data.name}":\n\nView: ${res.data.webViewLink}\nDownload: ${res.data.webContentLink ?? "Not available"}`
-            }]
-        };
-    } catch (err: any) {
-        console.error("❌ Error getting shareable link:", err.message);
-        return {
-            content: [{
-                type: "text",
-                text: `❌ Failed to generate shareable link: ${err.message}`
-            }]
-        };
-    }
-});
-
+            return {
+                content: [{
+                    type: "text",
+                    text: `🔗 Shareable link for "${res.data.name}":\n\nView: ${res.data.webViewLink}\nDownload: ${res.data.webContentLink ?? "Not available"}`
+                }]
+            };
+        } catch (err: any) {
+            console.error("❌ Error getting shareable link:", err.message);
+            return {
+                content: [{
+                    type: "text",
+                    text: `❌ Failed to generate shareable link: ${err.message}`
+                }]
+            };
+        }
+    });
 }
