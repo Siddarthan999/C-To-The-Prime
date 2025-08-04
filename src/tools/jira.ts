@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { jiraAuthHeader, ATLASSIAN_BASE_URL } from "../auth/jiraAuth.js";
+import { initJiraAuth, jiraAuthHeader, ATLASSIAN_BASE_URL } from "../auth/jiraAuth.js";
 
-export function registerJiraTools(server: McpServer) {
+export async function registerJiraTools(server: McpServer) {
+    await initJiraAuth();
     // Get Jira Ticket by Key
     server.tool("get-ticket", { key: z.string() }, async ({ key }) => {
         const response = await fetch(`${ATLASSIAN_BASE_URL}/rest/api/3/issue/${key}`, { headers: jiraAuthHeader });
@@ -59,6 +60,7 @@ export function registerJiraTools(server: McpServer) {
         });
         if (!response.ok) {
             const errorText = await response.text();
+            console.error("Jira ticket creation error:", errorText);
             return { content: [{ type: "text", text: `Failed to create ticket: ${errorText}` }] };
         }
         const data = await response.json();
