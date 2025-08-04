@@ -9,7 +9,8 @@ import { registerGoogleDriveTools } from "./tools/googleDrive.js";
 import { registerNotionTools } from "./tools/notion.js";
 import { registerGithubTools } from "./tools/github.js";
 import { registerServiceNowTools } from "./tools/servicenow.js";
-import { registerGitlabTools } from "./tools/gitlab.js";
+// import { registerGitlabTools } from "./tools/gitlab.js";
+import { registerGoogleCalendarTools } from "./tools/googleCalendar.js";
 
 const server = new McpServer({
     name: "C to the Prime MCP Server",
@@ -23,7 +24,8 @@ registerGoogleDriveTools(server);
 registerNotionTools(server);
 await registerGithubTools(server);
 registerServiceNowTools(server);
-registerGitlabTools(server);
+// registerGitlabTools(server);
+await registerGoogleCalendarTools(server);
 
 // Start MCP server
 const transport = new StdioServerTransport();
