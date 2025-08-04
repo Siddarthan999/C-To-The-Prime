@@ -20,7 +20,7 @@ registerConfluenceTools(server);
 registerBitbucketTools(server);
 registerGoogleDriveTools(server);
 registerNotionTools(server);
-registerGithubTools(server);
+await registerGithubTools(server);
 registerServiceNowTools(server);
 
 // Start MCP server

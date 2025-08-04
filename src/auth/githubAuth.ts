@@ -1,11 +1,23 @@
-import 'dotenv/config';
+// src/auth/githubAuth.ts
+import { getAuthFields } from "./keyVaultAuth.js";
 
-export const GITHUB_TOKEN = process.env.GITHUB_TOKEN!;
-export const GITHUB_USERNAME = process.env.GITHUB_USERNAME!;
-export const GITHUB_ORG = process.env.GITHUB_ORG || GITHUB_USERNAME;
+let GITHUB_ORG = "";
+let githubAuthHeader: Record<string, string> = {};
 
-export const githubAuthHeader = {
-  Authorization: `Bearer ${GITHUB_TOKEN}`,
-  'Accept': 'application/vnd.github+json',
-  'Content-Type': 'application/json',
+export const initGithubAuth = async () => {
+  const creds = await getAuthFields("GitHub");
+
+  if (!creds.GITHUB_TOKEN || !creds.GITHUB_USERNAME) {
+    throw new Error("Missing GitHub credentials from KeyVault.");
+  }
+
+  GITHUB_ORG = creds.GITHUB_ORG || creds.GITHUB_USERNAME;
+
+  githubAuthHeader = {
+    Authorization: `Bearer ${creds.GITHUB_TOKEN}`,
+    Accept: "application/vnd.github+json",
+    "Content-Type": "application/json"
+  };
 };
+
+export { GITHUB_ORG, githubAuthHeader };
