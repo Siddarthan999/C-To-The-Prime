@@ -35,5 +35,5 @@ export async function getAuthFields(toolName: string): Promise<Record<string, st
     throw new Error(`Failed to fetch credentials for ${toolName}`);
   }
 
-  return res.data;
+  return res.data as Record<string, string>;
 }
