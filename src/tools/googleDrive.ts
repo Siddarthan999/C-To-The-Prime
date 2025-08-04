@@ -181,49 +181,48 @@ export function registerGoogleDriveTools(server: McpServer) {
         };
     }
     });
-
     
-    server.tool("google-drive-create-file", {
-    name: z.string(),
-    content: z.string(),
-    parentFolderId: z.string().optional()
-    }, async ({ name, content, parentFolderId }) => {
-    try {
-        const fileMetadata: any = {
-        name,
-        mimeType: 'text/plain'
-        };
+    // server.tool("google-drive-create-file", {
+    // name: z.string(),
+    // content: z.string(),
+    // parentFolderId: z.string().optional()
+    // }, async ({ name, content, parentFolderId }) => {
+    // try {
+    //     const fileMetadata: any = {
+    //     name,
+    //     mimeType: 'text/plain'
+    //     };
 
-        if (parentFolderId) {
-        fileMetadata.parents = [parentFolderId];
-        }
+    //     if (parentFolderId) {
+    //     fileMetadata.parents = [parentFolderId];
+    //     }
 
-        const media = {
-        mimeType: 'text/plain',
-        body: content // ✅ pass the string directly
-        };
+    //     const media = {
+    //     mimeType: 'text/plain',
+    //     body: content // ✅ pass the string directly
+    //     };
 
-        const res = await drive.files.create({
-        requestBody: fileMetadata,
-        media
-        });
+    //     const res = await drive.files.create({
+    //     requestBody: fileMetadata,
+    //     media
+    //     });
 
-        return {
-        content: [{
-            type: "text",
-            text: `✅ File "${name}" created successfully with ID: ${res.data.id}`
-        }]
-        };
-    } catch (err: any) {
-        console.error("❌ Error creating file:", err.message);
-        return {
-        content: [{
-            type: "text",
-            text: `❌ Failed to create file: ${err.message}`
-        }]
-        };
-    }
-    });
+    //     return {
+    //     content: [{
+    //         type: "text",
+    //         text: `✅ File "${name}" created successfully with ID: ${res.data.id}`
+    //     }]
+    //     };
+    // } catch (err: any) {
+    //     console.error("❌ Error creating file:", err.message);
+    //     return {
+    //     content: [{
+    //         type: "text",
+    //         text: `❌ Failed to create file: ${err.message}`
+    //     }]
+    //     };
+    // }
+    // });
 
     server.tool("google-drive-delete-file", {
     fileId: z.string()

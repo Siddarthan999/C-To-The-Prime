@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { jiraAuthHeader, ATLASSIAN_BASE_URL } from "../auth/jiraAuth.js";
 
 export function registerConfluenceTools(server: McpServer) {
+  
   // ✅ List Confluence Pages
   server.tool("list-confluence-pages", { spaceKey: z.string() }, async ({ spaceKey }) => {
     const url = `${ATLASSIAN_BASE_URL}/wiki/rest/api/content?spaceKey=${spaceKey}&expand=body.view`;
