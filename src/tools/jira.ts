@@ -69,13 +69,53 @@ export async function registerJiraTools(server: McpServer) {
     
     // Query tickets with JQL
     server.tool("query-tickets", { jql: z.string() }, async ({ jql }) => {
-        const response = await fetch(`${ATLASSIAN_BASE_URL}/rest/api/3/search?jql=${encodeURIComponent(jql)}`, { headers: jiraAuthHeader });
-        if (!response.ok) {
-            return { content: [{ type: "text", text: `Failed to query tickets with JQL. Status: ${response.status}` }] };
-        }
-        const data = await response.json();
-        const ticketsList = data.issues.map((issue: any) => `${issue.key}: ${issue.fields.summary} (${issue.fields.status.name})`).join("\n");
-        return { content: [{ type: "text", text: ticketsList || "No tickets found." }] };
+    const response = await fetch(
+        `${ATLASSIAN_BASE_URL}/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=summary,status,description,created,updated,priority,assignee,reporter`,
+        { headers: jiraAuthHeader }
+    );
+
+    if (!response.ok) {
+        return {
+        content: [{ type: "text", text: `Failed to query tickets with JQL. Status: ${response.status}` }]
+        };
+    }
+
+    const data = await response.json();
+
+    if (!data.issues || data.issues.length === 0) {
+        return {
+        content: [{ type: "text", text: "No tickets found." }]
+        };
+    }
+
+    const ticketsList = data.issues.map((issue: any) => {
+        const {
+        summary,
+        status,
+        description,
+        created,
+        updated,
+        priority,
+        assignee,
+        reporter
+        } = issue.fields;
+
+        return `
+    🔹 **${issue.key}**  
+    - 📝 Summary: ${summary}  
+    - 📌 Status: ${status.name}  
+    - 🧾 Description: ${description?.content?.[0]?.content?.[0]?.text || "No description"}  
+    - 📅 Created: ${new Date(created).toLocaleString()}  
+    - 🕒 Updated: ${new Date(updated).toLocaleString()}  
+    - 🎯 Priority: ${priority?.name || "None"}  
+    - 👤 Assignee: ${assignee?.displayName || "Unassigned"}  
+    - 🧑 Reporter: ${reporter?.displayName || "Unknown"}
+        `.trim();
+    }).join("\n\n");
+
+    return {
+        content: [{ type: "text", text: ticketsList }]
+    };
     });
     
     // Add comment to a Jira Ticket

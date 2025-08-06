@@ -87,19 +87,53 @@ export function registerConfluenceTools(server: McpServer) {
     parentPageId: z.string().optional(),
     pageTitle: z.string()
   }, async ({ jql, spaceKey, parentPageId, pageTitle }) => {
-    const response = await fetch(`${ATLASSIAN_BASE_URL}/rest/api/3/search?jql=${encodeURIComponent(jql)}`, { headers: jiraAuthHeader });
+    const response = await fetch(
+      `${ATLASSIAN_BASE_URL}/rest/api/3/search?jql=${encodeURIComponent(jql)}&fields=summary,status,description,created,updated,priority,assignee,reporter`,
+      { headers: jiraAuthHeader }
+    );
+
     if (!response.ok) {
       const errorText = await response.text();
-      return { content: [{ type: "text", text: `Failed to query tickets with JQL. Status: ${response.status}. Details: ${errorText}` }] };
-    }
-    const data = await response.json();
-    if (!data.issues || data.issues.length === 0) {
-      return { content: [{ type: "text", text: `No tickets found with provided JQL.` }] };
+      return {
+        content: [{ type: "text", text: `Failed to query tickets with JQL. Status: ${response.status}. Details: ${errorText}` }]
+      };
     }
 
-    const summary = data.issues.map(
-      (issue: any) => `- **${issue.key}**: ${issue.fields.summary} _(Status: ${issue.fields.status.name})_`
-    ).join("\n");
+    const data = await response.json();
+    if (!data.issues || data.issues.length === 0) {
+      return {
+        content: [{ type: "text", text: `No tickets found with provided JQL.` }]
+      };
+    }
+
+    // Build formatted HTML
+    const summary = data.issues.map((issue: any) => {
+      const {
+        summary,
+        status,
+        description,
+        created,
+        updated,
+        priority,
+        assignee,
+        reporter
+      } = issue.fields;
+
+      const descText = description?.content?.[0]?.content?.[0]?.text || "No description";
+
+      return `
+        <h3>${issue.key}: ${summary}</h3>
+        <ul>
+          <li><strong>Status:</strong> ${status.name}</li>
+          <li><strong>Description:</strong> ${descText}</li>
+          <li><strong>Created:</strong> ${new Date(created).toLocaleString()}</li>
+          <li><strong>Updated:</strong> ${new Date(updated).toLocaleString()}</li>
+          <li><strong>Priority:</strong> ${priority?.name || "None"}</li>
+          <li><strong>Assignee:</strong> ${assignee?.displayName || "Unassigned"}</li>
+          <li><strong>Reporter:</strong> ${reporter?.displayName || "Unknown"}</li>
+        </ul>
+      `;
+    }).join("<hr/>");
 
     const createPageResponse = await fetch(`${ATLASSIAN_BASE_URL}/wiki/rest/api/content`, {
       method: "POST",
@@ -111,7 +145,7 @@ export function registerConfluenceTools(server: McpServer) {
         ancestors: parentPageId ? [{ id: parentPageId }] : undefined,
         body: {
           storage: {
-            value: `<h1>${pageTitle}</h1><p>Auto-generated Jira summary:</p><pre>${summary}</pre>`,
+            value: `<h1>${pageTitle}</h1><p>Auto-generated Jira ticket summary:</p>${summary}`,
             representation: "storage"
           }
         }
@@ -120,16 +154,19 @@ export function registerConfluenceTools(server: McpServer) {
 
     if (!createPageResponse.ok) {
       const errorText = await createPageResponse.text();
-      return { content: [{ type: "text", text: `Failed to create Confluence page. Status: ${createPageResponse.status}. Details: ${errorText}` }] };
+      return {
+        content: [{ type: "text", text: `Failed to create Confluence page. Status: ${createPageResponse.status}. Details: ${errorText}` }]
+      };
     }
 
     const pageData = await createPageResponse.json();
     const pageUrl = `${ATLASSIAN_BASE_URL}/wiki${pageData._links.webui}`;
 
     return {
-      content: [{ type: "text", text: `✅ Confluence page "${pageTitle}" created with Jira summary:\n${pageUrl}` }]
+      content: [{ type: "text", text: `✅ Confluence page "${pageTitle}" created with detailed Jira summary:\n${pageUrl}` }]
     };
   });
+
 
   // ✅ Summarize a Confluence Page
   server.tool("summarize-confluence-page", { pageId: z.string() }, async ({ pageId }) => {
