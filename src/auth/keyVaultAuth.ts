@@ -23,7 +23,7 @@ export async function getToolIdByName(toolName: string): Promise<string> {
 export async function getAuthFields(toolName: string): Promise<Record<string, string>> {
   const toolId = await getToolIdByName(toolName);
 
-  const res = await axios.get(`${KEYVAULT_BASE_URL}/api/credentials/get-mcp`, {
+  const res = await axios.get<Record<string, string>>(`${KEYVAULT_BASE_URL}/api/credentials/get-mcp`, {
     headers: { "x-api-key": KEYVAULT_API_KEY },
     params: {
       user_id: USER_ID,
